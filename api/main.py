@@ -38,7 +38,7 @@ num_predictions = 0
 last_retrain_time = None
 
 # ✔ Load fine-tuned SavedModel
-current_model_path = os.path.join(MODELS_DIR, "models/mobilenet_pneumonia_fixed.h5")
+current_model_path = os.path.join(MODELS_DIR, "mobilenet_pneumonia_fixed.h5")
 prediction.load_model(current_model_path)
 
 # --------------------
@@ -117,5 +117,6 @@ async def retrain():
         "history": history,
 
     }
+
 
 
