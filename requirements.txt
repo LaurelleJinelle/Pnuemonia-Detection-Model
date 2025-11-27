@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+tensorflow==2.13.0
+numpy
+pillow
+opencv-python-headless
+python-multipart
+six
+h5py

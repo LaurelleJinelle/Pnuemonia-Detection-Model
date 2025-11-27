@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: pneumonia-detection-api
+    env: docker
+    region: frankfurt
+    plan: free
+    dockerfilePath: ./Dockerfile
+    rootDir: .
+    autoDeploy: true
+    envVars:
+      - key: MODEL_PATH
+        value: models/mobilenet_pneumonia_finetuned.h5
