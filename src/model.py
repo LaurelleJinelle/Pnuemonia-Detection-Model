@@ -119,7 +119,7 @@ def retrain_model(retrain_data_dir: str):
     # -----------------------------
     os.makedirs(MODELS_DIR, exist_ok=True)
 
-    new_model_path = os.path.join("models", "mobilenet_pneumonia_finetuned_model_v2.h5")
+    new_model_path = os.path.join("models", "models/mobilenet_pneumonia_fixed.h5")
     model.save(new_model_path)
 
     # -----------------------------
@@ -133,3 +133,4 @@ def retrain_model(retrain_data_dir: str):
 
 
     return new_model_path, full_history
+
