@@ -1,6 +1,6 @@
 import requests
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "https://pnuemonia-detection-model.onrender.com"
 
 
 def predict_image(file):
@@ -30,3 +30,4 @@ def get_status():
     """Get uptime, predictions count, current model."""
     response = requests.get(f"{API_URL}/status")
     return response.json()
+
