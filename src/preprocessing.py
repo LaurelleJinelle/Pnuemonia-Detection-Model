@@ -34,9 +34,17 @@ def get_dataset_from_directory(data_dir: str, shuffle=True):
     )
 
 def preprocess_for_prediction(img_bytes: bytes):
-    img = tf.io.decode_image(img_bytes, channels=3)
+    try:
+        img = tf.image.decode_jpeg(img_bytes, channels=3)
+    except:
+        img = tf.image.decode_png(img_bytes, channels=3)
+
     img = tf.image.resize(img, IMG_SIZE)
     img = tf.cast(img, tf.float32)
+
     img = tf.keras.applications.mobilenet_v2.preprocess_input(img)
-    img = tf.expand_dims(img, 0)  # batch dimension
+
+    img = tf.expand_dims(img, 0)  
+
     return img
+
