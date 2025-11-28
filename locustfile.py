@@ -5,7 +5,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_IMAGE = os.path.join(BASE_DIR, "sample_images", "normal1.jpeg")
 
 class PneumoniaLoadTest(HttpUser):
-    host = "https://pnuemonia-detection-model.onrender.com"
     wait_time = between(1, 5)
 
     @task
@@ -17,4 +16,5 @@ class PneumoniaLoadTest(HttpUser):
         with open(TEST_IMAGE, "rb") as f:
             files = {"file": ("normal1.jpeg", f, "image/jpeg")}
             self.client.post("/predict", files=files)
+
 
