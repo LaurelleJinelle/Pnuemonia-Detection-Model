@@ -57,7 +57,7 @@ def get_status():
 
 
 @app.post("/predict")
-async def predict_endpoint(file: UploadFile = File(...)):
+def predict_endpoint(file: UploadFile = File(...)):
     """Predict pneumonia class for a single uploaded image."""
 
     global num_predictions
@@ -117,6 +117,7 @@ async def retrain():
         "history": history,
 
     }
+
 
 
 
