@@ -62,7 +62,7 @@ def predict_endpoint(file: UploadFile = File(...)):
 
     global num_predictions
 
-    img_bytes = await file.read()
+    img_bytes = file.read()
     label, confidence = prediction.predict_image_bytes(img_bytes)
 
     num_predictions += 1
@@ -117,6 +117,7 @@ async def retrain():
         "history": history,
 
     }
+
 
 
 
