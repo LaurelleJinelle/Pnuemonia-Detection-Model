@@ -38,7 +38,7 @@ num_predictions = 0
 last_retrain_time = None
 
 # ✔ Load fine-tuned SavedModel
-current_model_path = "../models/mobilenet_pneumonia_finetuned_model"
+current_model_path = "/app/models/mobilenet_pneumonia_finetuned_model"
 prediction.load_model(current_model_path)
 
 # --------------------
@@ -117,6 +117,7 @@ async def retrain():
         "history": history,
 
     }
+
 
 
 
