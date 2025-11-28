@@ -57,12 +57,12 @@ def get_status():
 
 
 @app.post("/predict")
-def predict_endpoint(file: UploadFile = File(...)):
+async def predict_endpoint(file: UploadFile = File(...)):
     """Predict pneumonia class for a single uploaded image."""
 
     global num_predictions
 
-    img_bytes = file.read()
+    img_bytes = await file.read()
     label, confidence = prediction.predict_image_bytes(img_bytes)
 
     num_predictions += 1
@@ -117,6 +117,7 @@ async def retrain():
         "history": history,
 
     }
+
 
 
 
