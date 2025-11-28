@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from src.preprocessing import preprocess_for_prediction
+from keras import models as keras_models 
 
 _model = None
 _class_names = ["NORMAL", "PNEUMONIA"]   # adjust based on your dataset
@@ -17,4 +18,5 @@ def predict_image_bytes(img_bytes: bytes):
     confidence = float(np.max(preds))
     label = _class_names[class_idx]
     return label, confidence
+
 
