@@ -1,6 +1,8 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearnex import patch_sklearn
+patch_sklearn()
 from sklearn.metrics import classification_report, confusion_matrix
 import seaborn as sns
 
@@ -91,3 +93,4 @@ if "y_true" in st.session_state and "y_pred" in st.session_state:
 
 else:
     st.info("Prediction labels not available yet. They will appear here after you run evaluation in your notebook.")
+
