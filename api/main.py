@@ -100,17 +100,20 @@ async def upload_data(label: str = Form(...), files: List[UploadFile] = File(...
 async def retrain():
     global last_retrain_time, current_model_path
 
-    # Check if retrain_data has any files
-    has_data = any(
-        os.scandir(os.path.join(RETRAIN_DIR, d))
-        for d in os.listdir(RETRAIN_DIR)
-        if os.path.isdir(os.path.join(RETRAIN_DIR, d))
-    )
+    # --- PREVENT RETRAIN IF NOT ENOUGH DATA ---
+    def count_images(path):
+        return sum(len(files) for _,_,files in os.walk(path))
 
-    if not has_data:
-        return {"error": "No training data found. Upload images first using /upload-data."}
+    total_images = count_images(RETRAIN_DIR)
 
+    if total_images < 10:
+        return {
+            "error": f"Not enough images to retrain. You uploaded {total_images}, but at least 10 are required."
+        }
+
+    # Proceed with retraining
     new_model_path, history = model_utils.retrain_model(RETRAIN_DIR)
+
     prediction.load_model(new_model_path)
     current_model_path = new_model_path
 
@@ -121,3 +124,4 @@ async def retrain():
         "new_model_path": new_model_path,
         "history": history,
     }
+
