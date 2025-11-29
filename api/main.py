@@ -100,23 +100,35 @@ async def upload_data(label: str = Form(...), files: List[UploadFile] = File(...
 async def retrain():
     global last_retrain_time, current_model_path
 
-    # --- PREVENT RETRAIN IF NOT ENOUGH DATA ---
-    def count_images(path):
-        return sum(len(files) for _,_,files in os.walk(path))
+    # Required classes
+    required_classes = ["COVID-19", "Normal", "Pneumonia-Bacterial", "Pneumonia-Viral"]
 
-    total_images = count_images(RETRAIN_DIR)
+    missing = []
+    for c in required_classes:
+        class_path = os.path.join(RETRAIN_DIR, c)
+        if not os.path.exists(class_path) or len(os.listdir(class_path)) == 0:
+            missing.append(c)
 
-    if total_images < 4:
+    if missing:
         return {
-            "error": f"Not enough images to retrain. You uploaded {total_images}, but at least 4 are required."
+            "error": f"Cannot retrain: missing images for classes: {', '.join(missing)}"
         }
 
-    # Proceed with retraining
+    # OPTIONAL: minimum total images threshold
+    def count_images(path):
+        return sum(len(files) for _,_,files in os.walk(path))
+    
+    total_images = count_images(RETRAIN_DIR)
+    if total_images < 20:
+        return {
+            "error": f"Not enough images to retrain. You have {total_images}, at least 20 recommended."
+        }
+
+    # Now safe to retrain
     new_model_path, history = model_utils.retrain_model(RETRAIN_DIR)
 
     prediction.load_model(new_model_path)
     current_model_path = new_model_path
-
     last_retrain_time = datetime.utcnow().isoformat() + "Z"
 
     return {
@@ -124,5 +136,3 @@ async def retrain():
         "new_model_path": new_model_path,
         "history": history,
     }
-
-
