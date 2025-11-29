@@ -3,7 +3,7 @@ from utils import upload_training_data, retrain_model
 
 st.title("🔄 Retrain Model")
 
-label = st.text_input("Enter class label (e.g., Normal, Pneumonia, Viral)")
+label = st.text_input("Enter class label ("COVID-19", "Normal", "Pneumonia-Bacterial", "Pneumonia-Viral")
 
 files = st.file_uploader(
     "Upload images for this class",
@@ -22,3 +22,4 @@ if st.button("Start Retraining"):
         result = retrain_model()
     st.success("Retraining Complete!")
     st.json(result)
+
