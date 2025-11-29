@@ -106,9 +106,9 @@ async def retrain():
 
     total_images = count_images(RETRAIN_DIR)
 
-    if total_images < 10:
+    if total_images < 4:
         return {
-            "error": f"Not enough images to retrain. You uploaded {total_images}, but at least 10 are required."
+            "error": f"Not enough images to retrain. You uploaded {total_images}, but at least 4 are required."
         }
 
     # Proceed with retraining
@@ -124,4 +124,5 @@ async def retrain():
         "new_model_path": new_model_path,
         "history": history,
     }
+
 
