@@ -19,7 +19,6 @@ def upload_training_data(label, files):
     response = requests.post(f"{API_URL}/upload-data", data=data, files=upload_files)
     return response.json()
 
-
 def retrain_model():
     response = requests.post(f"{API_URL}/retrain")
     try:
@@ -32,5 +31,6 @@ def get_status():
     """Get uptime, predictions count, current model."""
     response = requests.get(f"{API_URL}/status")
     return response.json()
+
 
 
