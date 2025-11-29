@@ -21,13 +21,16 @@ def upload_training_data(label, files):
 
 
 def retrain_model():
-    """Trigger the /retrain endpoint."""
     response = requests.post(f"{API_URL}/retrain")
-    return response.json()
+    try:
+        return response.json()
+    except:
+        return {"error": response.text}
 
 
 def get_status():
     """Get uptime, predictions count, current model."""
     response = requests.get(f"{API_URL}/status")
     return response.json()
+
 
