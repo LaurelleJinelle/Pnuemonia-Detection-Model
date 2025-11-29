@@ -1,4 +1,4 @@
-** Pneumonia Detection Model — End-to-End MLOps Pipeline **
+**Pneumonia Detection Model — End-to-End MLOps Pipeline**
 
 
 📌 YouTube Link: https://youtu.be/NkDrN6hW0Jo
@@ -7,24 +7,22 @@
 🚀 FastAPI Backend (Render): https://pnuemonia-detection-model.onrender.com 
 🎨 Streamlit UI: https://pnuemonia-detection-model.streamlit.app/
 
-** Project Description **
+**Project Description**
 
 This project implements a full Machine Learning Pipeline & MLOps workflow for detecting pneumonia from chest X-ray images.
 
 The system includes:
-✔ Image dataset preprocessing
-✔ Transfer learning using MobileNetV2
-✔ Model evaluation (accuracy, precision, recall, F1-score)
-✔ Cloud-deployed inference API (FastAPI + Render)
-✔ Cloud-deployed frontend (Streamlit)
-✔ Retraining pipeline (user uploads → retrain → updated model)
-✔ Dataset visualizations & model insights
-✔ Load Testing using Locust
-  ✔ Monitoring: uptime, prediction count, active model version
+1. Image dataset preprocessing
+2. Transfer learning using MobileNetV2
+3. Model evaluation (accuracy, precision, recall, F1-score)
+4. Cloud-deployed inference API (FastAPI + Render)
+5. Cloud-deployed frontend (Streamlit)
+6. Retraining pipeline (user uploads → retrain → updated model)
+7. Dataset visualizations & model insights
+8. Load Testing using Locust
+   Monitoring: uptime, prediction count, active model version
 
-This showcases a production-ready MLOps workflow.
-
-** How to Set Up the Project (Local Development) **
+**How to Set Up the Project (Local Development)**
 
 Follow these steps if running locally.
 
@@ -58,7 +56,7 @@ Endpoint	Method	Description
 
 The backend loads: models/mobilenet_pneumonia_finetuned.h5
 
-** Model Development (Training & Evaluation) **
+**Model Development (Training & Evaluation)**
 
 Two experiments were conducted:
 
@@ -119,3 +117,4 @@ The following script was used:
 `locust -f locustfile.py --host=https://pnuemonia-detection-model.onrender.com`
 
 <img width="1824" height="557" alt="Screenshot 2025-11-29 111015" src="https://github.com/user-attachments/assets/a1b1a8a3-5a4c-493b-bd8a-a0167d487a13" />
+
