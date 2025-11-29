@@ -1,18 +1,16 @@
 import os
+import json
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
 from src.preprocessing import get_train_val_datasets, IMG_SIZE, BATCH_SIZE
 
-# Absolute models dir, e.g. /app/models
+# Absolute models directory
 MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
 
 
 def build_model(num_classes: int):
-    """
-    Build a MobileNetV2 classification model.
-    Returns (model, base_model) so we can fine-tune later.
-    """
+    """Build a MobileNetV2 classification model."""
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=IMG_SIZE + (3,),
         include_top=False,
@@ -38,9 +36,7 @@ def build_model(num_classes: int):
 
 
 def fine_tune(model, base_model):
-    """
-    Unfreeze top MobileNetV2 layers for fine-tuning.
-    """
+    """Unfreeze top MobileNetV2 layers for fine-tuning."""
     base_model.trainable = True
 
     # Unfreeze top 40% of layers
@@ -57,64 +53,48 @@ def fine_tune(model, base_model):
 
 
 def _make_callbacks(has_val: bool):
-    """
-    Build callbacks list depending on whether we have validation data.
-    If no validation set, monitor training loss instead of val_loss.
-    """
-    if has_val:
-        monitor = "val_loss"
-    else:
-        monitor = "loss"
+    """Return callbacks that work safely with or without validation."""
+    monitor = "val_loss" if has_val else "loss"
 
     early_stop = tf.keras.callbacks.EarlyStopping(
         monitor=monitor,
         patience=2,
         restore_best_weights=True,
     )
-
     return [early_stop]
 
 
 def retrain_model(retrain_data_dir: str):
-    """
-    Retrain model using the data in `retrain_data_dir`.
+    """Retrain model and return (new_model_path, training_history)."""
 
-    Returns:
-        new_model_path (str): path to the saved model (absolute)
-        history_dict (dict): training history that can be JSON-encoded
-    """
     # -----------------------------
-    # 1. Load dataset for retraining
+    # 1. Load dataset
     # -----------------------------
     print("[INFO] Loading retraining dataset:", retrain_data_dir)
 
     train_ds, val_ds = get_train_val_datasets(retrain_data_dir)
-    class_names = getattr(train_ds, "class_names", None)
-    if class_names is None:
-        # Fallback in case TF version doesn't attach class_names
-        class_names = []
 
-    num_classes = len(class_names) if class_names else 0
+    class_names = getattr(train_ds, "class_names", [])
+    num_classes = len(class_names)
     print(f"[INFO] Classes ({num_classes}): {class_names}")
 
     if num_classes == 0:
         raise ValueError(
-            "No classes were found in the retraining dataset. "
-            "Make sure /retrain_data has subfolders per class."
+            "Retraining aborted: No class folders found under /retrain_data."
         )
 
     has_val = val_ds is not None
 
     # -----------------------------
-    # 2. Build a fresh base model
+    # 2. Build model
     # -----------------------------
     print("[INFO] Building model...")
     model, base_model = build_model(num_classes)
 
     # -----------------------------
-    # 3. TRAIN PHASE 1 — frozen base
+    # 3. Phase 1 – Train classifier head
     # -----------------------------
-    print("[INFO] Training initial classifier layers...")
+    print("[INFO] Training classifier head...")
     callbacks_phase1 = _make_callbacks(has_val)
 
     history1 = model.fit(
@@ -125,7 +105,7 @@ def retrain_model(retrain_data_dir: str):
     )
 
     # -----------------------------
-    # 4. TRAIN PHASE 2 — fine-tune deeper layers
+    # 4. Phase 2 – Fine-tuning
     # -----------------------------
     print("[INFO] Fine-tuning...")
     model = fine_tune(model, base_model)
@@ -139,30 +119,28 @@ def retrain_model(retrain_data_dir: str):
     )
 
     # -----------------------------
-    # 5. Save new model
+    # 5. Save model safely
     # -----------------------------
     os.makedirs(MODELS_DIR, exist_ok=True)
 
-# Create versioned folder
-version_name = "mobilenet_pneumonia_finetuned_model"
-new_model_path = os.path.join(MODELS_DIR, version_name)
+    version_name = "mobilenet_pneumonia_finetuned_model"
+    new_model_path = os.path.join(MODELS_DIR, version_name)
 
-# Save SavedModel directory
-model.save(new_model_path, save_format="tf")
+    print("[INFO] Saving model to:", new_model_path)
+    model.save(new_model_path, save_format="tf")
 
-# Save label map
-label_map_path = os.path.join(new_model_path, "label_map.json")
-with open(label_map_path, "w") as f:
-    json.dump(class_names, f)
-
+    # Save class labels
+    label_map_path = os.path.join(new_model_path, "label_map.json")
+    with open(label_map_path, "w") as f:
+        json.dump(class_names, f)
 
     # -----------------------------
-    # 6. Prepare history for API/Streamlit
+    # 6. Build JSON-serializable history
     # -----------------------------
     full_history = {
+        "classes": class_names,
         "phase1": {k: [float(v_) for v_ in v] for k, v in history1.history.items()},
         "phase2": {k: [float(v_) for v_ in v] for k, v in history2.history.items()},
-        "classes": class_names,
         "has_validation": has_val,
     }
 
