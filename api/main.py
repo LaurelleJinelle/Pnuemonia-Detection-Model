@@ -101,30 +101,48 @@ async def retrain():
     global last_retrain_time, current_model_path
 
     # Required classes
-    required_classes = ["COVID-19", "Normal", "Pneumonia-Bacterial", "Pneumonia-Viral"]
+    REQUIRED_CLASSES = ["COVID-19", "Normal", "Pneumonia-Bacterial", "Pneumonia-Viral"]
 
-    missing = []
-    for c in required_classes:
-        class_path = os.path.join(RETRAIN_DIR, c)
-        if not os.path.exists(class_path) or len(os.listdir(class_path)) == 0:
-            missing.append(c)
+    # Check per-class image availability
+    missing_classes = []
+    class_counts = {}
 
-    if missing:
+    for cls in REQUIRED_CLASSES:
+        cls_path = os.path.join(RETRAIN_DIR, cls)
+        if not os.path.exists(cls_path):
+            missing_classes.append(cls)
+            class_counts[cls] = 0
+            continue
+
+        image_count = len([
+            f for f in os.listdir(cls_path)
+            if f.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif"))
+        ])
+
+        class_counts[cls] = image_count
+
+        if image_count == 0:
+            missing_classes.append(cls)
+
+    # Return detailed error
+    if missing_classes:
         return {
-            "error": f"Cannot retrain: missing images for classes: {', '.join(missing)}"
+            "error": "Missing training data for the following classes.",
+            "missing_classes": missing_classes,
+            "class_counts": class_counts
         }
 
-    # OPTIONAL: minimum total images threshold
-    def count_images(path):
-        return sum(len(files) for _,_,files in os.walk(path))
-    
-    total_images = count_images(RETRAIN_DIR)
-    if total_images < 20:
+    # Optional: enforce minimum total images
+    total_images = sum(class_counts.values())
+    if total_images < 12:
         return {
-            "error": f"Not enough images to retrain. You have {total_images}, at least 20 recommended."
+            "error": "Not enough total training images.",
+            "required": 12,
+            "current": total_images,
+            "class_counts": class_counts
         }
 
-    # Now safe to retrain
+    # --- SAFE TO RETRAIN ---
     new_model_path, history = model_utils.retrain_model(RETRAIN_DIR)
 
     prediction.load_model(new_model_path)
@@ -135,4 +153,5 @@ async def retrain():
         "message": "Retraining complete.",
         "new_model_path": new_model_path,
         "history": history,
+        "class_counts": class_counts
     }
