@@ -100,7 +100,7 @@ def retrain_model(retrain_data_dir: str):
     history1 = model.fit(
         train_ds,
         validation_data=val_ds if has_val else None,
-        epochs=5,
+        epochs=2,
         callbacks=callbacks_phase1,
     )
 
@@ -114,7 +114,7 @@ def retrain_model(retrain_data_dir: str):
     history2 = model.fit(
         train_ds,
         validation_data=val_ds if has_val else None,
-        epochs=5,
+        epochs=2,
         callbacks=callbacks_phase2,
     )
 
@@ -145,3 +145,4 @@ def retrain_model(retrain_data_dir: str):
     }
 
     return new_model_path, full_history
+
