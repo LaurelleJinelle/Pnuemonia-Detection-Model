@@ -100,7 +100,10 @@ async def upload_data(label: str = Form(...), files: List[UploadFile] = File(...
 async def retrain():
     global last_retrain_time, current_model_path
 
-    REQUIRED_CLASSES = ["COVID-19", "Normal", "Pneumonia-Bacterial", "Pneumonia-Viral"]
+    REQUIRED_CLASSES = sorted([
+    d for d in os.listdir(RETRAIN_DIR)
+    if os.path.isdir(os.path.join(RETRAIN_DIR, d))])
+
 
     print(">>> Checking retrain directory:", RETRAIN_DIR)
     print(">>> Subfolders:", os.listdir(RETRAIN_DIR))
@@ -168,3 +171,4 @@ async def retrain():
             "detail": str(e),
             "class_counts": class_counts
         }
+
