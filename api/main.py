@@ -100,83 +100,71 @@ async def upload_data(label: str = Form(...), files: List[UploadFile] = File(...
 async def retrain():
     global last_retrain_time, current_model_path
 
+    REQUIRED_CLASSES = ["COVID-19", "Normal", "Pneumonia-Bacterial", "Pneumonia-Viral"]
+
+    print(">>> Checking retrain directory:", RETRAIN_DIR)
+    print(">>> Subfolders:", os.listdir(RETRAIN_DIR))
+
+    missing_classes = []
+    class_counts = {}
+
+    for cls in REQUIRED_CLASSES:
+        cls_path = os.path.join(RETRAIN_DIR, cls)
+
+        # Ensure folder exists
+        if not os.path.isdir(cls_path):
+            print("Missing folder:", cls_path)
+            missing_classes.append(cls)
+            class_counts[cls] = 0
+            continue
+
+        # Count valid images
+        images = [
+            f for f in os.listdir(cls_path)
+            if f.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif"))
+        ]
+
+        class_counts[cls] = len(images)
+
+        if len(images) == 0:
+            missing_classes.append(cls)
+
+    # If missing, return detailed message
+    if missing_classes:
+        return {
+            "error": "Missing training data for required classes.",
+            "missing_classes": missing_classes,
+            "class_counts": class_counts
+        }
+
+    # Minimum total images
+    total_images = sum(class_counts.values())
+    if total_images < 12:
+        return {
+            "error": "Not enough total training images.",
+            "required": 12,
+            "current": total_images,
+            "class_counts": class_counts
+        }
+
+    # SAFE TO RETRAIN
     try:
-        # Required classes
-        REQUIRED_CLASSES = ["COVID-19", "Normal", "Pneumonia-Bacterial", "Pneumonia-Viral"]
+        new_model_path, history = model_utils.retrain_model(RETRAIN_DIR)
 
-        # Check per-class availability
-        missing_classes = []
-        class_counts = {}
+        prediction.load_model(new_model_path)
+        current_model_path = new_model_path
+        last_retrain_time = datetime.utcnow().isoformat() + "Z"
 
-        for cls in REQUIRED_CLASSES:
-            cls_path = os.path.join(RETRAIN_DIR, cls)
-
-            if not os.path.exists(cls_path):
-                missing_classes.append(cls)
-                class_counts[cls] = 0
-                continue
-
-            image_count = len([
-                f for f in os.listdir(cls_path)
-                if f.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif"))
-            ])
-            class_counts[cls] = image_count
-
-            if image_count == 0:
-                missing_classes.append(cls)
-
-        # Return missing class errors
-        if missing_classes:
-            return {
-                "error": "Missing training data for required classes.",
-                "missing_classes": missing_classes,
-                "class_counts": class_counts
-            }
-
-        # Enforce minimum dataset size
-        total_images = sum(class_counts.values())
-        if total_images < 12:
-            return {
-                "error": "Not enough total training images.",
-                "required_minimum": 12,
-                "current_total": total_images,
-                "class_counts": class_counts
-            }
-
-        # --- SAFE TO RETRAIN ---
-        # Wrap heavy retraining call in try/except
-        try:
-            new_model_path, history = model_utils.retrain_model(RETRAIN_DIR)
-        except Exception as e:
-            return {
-                "error": "Retraining failed inside model_utils.",
-                "details": str(e)
-            }
-
-        # Reload the model (may cause a restart on some platforms)
-        try:
-            prediction.load_model(new_model_path)
-            current_model_path = new_model_path
-            last_retrain_time = datetime.utcnow().isoformat() + "Z"
-        except Exception as e:
-            # If reload fails, still return JSON
-            return {
-                "warning": "Model retrained, but reload failed.",
-                "new_model_path": new_model_path,
-                "details": str(e)
-            }
-
-        # SUCCESS — return fully JSON-safe history
         return {
             "message": "Retraining complete.",
-            "class_counts": class_counts,
             "new_model_path": new_model_path,
-            "history": history
+            "history": history,
+            "class_counts": class_counts
         }
 
     except Exception as e:
-        # Catches ANY other crash to avoid HTML responses
         return {
-            "error": "Unexpected server error.",
-            "details": str(e)
+            "error": "Retraining failed.",
+            "detail": str(e),
+            "class_counts": class_counts
         }
