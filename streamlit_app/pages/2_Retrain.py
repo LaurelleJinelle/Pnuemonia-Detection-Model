@@ -17,7 +17,7 @@ files = st.file_uploader(
     accept_multiple_files=True
 )
 
-# Store uploaded paths for this session
+# Store uploaded paths for this session only
 if "uploaded_paths" not in st.session_state:
     st.session_state.uploaded_paths = {}
 
@@ -30,21 +30,20 @@ if st.button("Upload Data"):
         result = upload_training_data(label, files)
 
         if "paths" in result:
-            # Save paths in session state
             st.session_state.uploaded_paths[label] = result["paths"]
-
             st.success("Upload complete!")
         else:
-            st.error(f"Upload failed: {result}")
+            st.error(f"Upload failed")
+            st.json(result)
 
-# Display uploaded paths cleanly
+# Display uploaded data
 if st.session_state.uploaded_paths:
     st.subheader("Uploaded Data Overview")
+
     for class_label, paths in st.session_state.uploaded_paths.items():
-        st.write(f"**{class_label}**")
+        st.write(f"### {class_label}")
         for p in paths:
             st.code(p)
-
 
 # --- Retrain section ---
 st.subheader("Start Model Retraining")
@@ -52,9 +51,21 @@ st.subheader("Start Model Retraining")
 if st.button("Start Retraining"):
     response = retrain_model()
 
-    # Show success ONLY if retraining truly succeeded
+    # Case 1: retraining succeeded normally
     if "message" in response and response["message"] == "Retraining complete.":
-        st.success("Retraining Complete!")
-    else:
-        st.error("Retraining failed!")
+        st.success("🎉 Retraining complete! Your model has been updated.")
         st.json(response)
+
+    # Case 2: backend returned a structured error JSON
+    elif "error" in response and response["error"]:
+        st.error(f"❌ Retraining failed: {response['error']}")
+        st.json(response)
+
+    # Case 3: server restarted during training → HTML returned
+    else:
+        st.warning(
+            "⚠️ The server restarted during retraining. "
+            "The process likely finished, but the response was incomplete."
+        )
+        st.write("Raw response:")
+        st.code(str(response))
