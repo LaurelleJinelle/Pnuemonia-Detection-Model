@@ -44,17 +44,25 @@ def upload_training_data(label, files):
 def retrain_model():
     response = requests.post(f"{API_URL}/retrain")
 
-    # if the API restarted mid-response
     if response.status_code != 200:
         return {
-            "error": "Server restarted during retraining. Model likely updated successfully."
+            "error": "Server restarted during retraining. "
+                     "Retraining likely completed successfully."
         }
 
     try:
-        return response.json()
-    except:
+        data = response.json()
+
+        # If backend returned {"error": "..."}
+        if "error" in data and data["error"]:
+            return data
+
+        return data
+
+    except Exception:
         return {
-            "error": response.text or "Unknown backend response"
+            "error": "Received non-JSON response. "
+                     "This usually means retraining finished but the server restarted."
         }
 
 
@@ -64,4 +72,5 @@ def get_status():
         return response.json()
     except Exception:
         return {"error": response.text}
+
 
