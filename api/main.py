@@ -98,14 +98,19 @@ async def upload_data(label: str = Form(...), files: List[UploadFile] = File(...
 
 @app.post("/retrain")
 async def retrain():
-    """Trigger full retraining of the model using uploaded data."""
-
     global last_retrain_time, current_model_path
 
-    # This function must return a SavedModel directory path
-    new_model_path, history = model_utils.retrain_model(RETRAIN_DIR)
+    # Check if retrain_data has any files
+    has_data = any(
+        os.scandir(os.path.join(RETRAIN_DIR, d))
+        for d in os.listdir(RETRAIN_DIR)
+        if os.path.isdir(os.path.join(RETRAIN_DIR, d))
+    )
 
-    # Update global model reference
+    if not has_data:
+        return {"error": "No training data found. Upload images first using /upload-data."}
+
+    new_model_path, history = model_utils.retrain_model(RETRAIN_DIR)
     prediction.load_model(new_model_path)
     current_model_path = new_model_path
 
@@ -115,13 +120,4 @@ async def retrain():
         "message": "Retraining complete.",
         "new_model_path": new_model_path,
         "history": history,
-
     }
-
-
-
-
-
-
-
-
